@@ -52,14 +52,14 @@ jobs:
             # 2. Test data loading
             cursor = conn.cursor();
             cursor.execute('''
-              INSERT INTO EBAY_WATCHES (item_id, title, price, extraction_timestamp) 
+              INSERT INTO EBAY_WATCH_ANALYTICS.RAW.EBAY_WATCHES (item_id, title, price, extraction_timestamp) 
               VALUES (%s, %s, %s, CURRENT_TIMESTAMP())
             ''', ('github_test_001', 'GitHub Test Watch', 999.99));
             conn.commit();
             print('✓ Test data inserted');
             
             # 3. Verify data exists
-            cursor.execute('SELECT COUNT(*) FROM EBAY_WATCHES WHERE item_id = %s', ('github_test_001',));
+            cursor.execute('SELECT COUNT(*) FROM EBAY_WATCH_ANALYTICS.RAW.EBAY_WATCHES WHERE item_id = %s', ('github_test_001',));
             count = cursor.fetchone()[0];
             if count == 0:
               raise Exception('Data verification failed: Test record not found');
