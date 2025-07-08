@@ -1,3 +1,12 @@
+name: Snowflake Data Loader
+
+on:
+  # Trigger on pushes to main branch
+  push:
+    branches: ["main"]
+  # Allow manual triggers
+  workflow_dispatch:
+
 jobs:
   load-data:
     runs-on: ubuntu-latest
@@ -12,6 +21,30 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Load data to Snowflake
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.10"
+
+      - name: Install dependencies
         run: |
-          python data_collection/snowflake_loader.py
+          python -m pip install --upgrade pip
+          pip install snowflake-connector-python python-dotenv
+
+      - name: Load test data to Snowflake
+        run: |
+          python -c "
+          import snowflake.connector, os;
+          conn = snowflake.connector.connect(
+            user=os.getenv('SNOWFLAKE_USER'),
+            password=os.getenv('SNOWFLAKE_PASSWORD'),
+            account=os.getenv('SNOWFLAKE_ACCOUNT'),
+            warehouse=os.getenv('SNOWFLAKE_WAREHOUSE'),
+            database=os.getenv('SNOWFLAKE_DATABASE'),
+            schema=os.getenv('SNOWFLAKE_SCHEMA')
+          );
+          cursor = conn.cursor();
+          cursor.execute('INSERT INTO EBAY_WATCHES (item_id, title) VALUES (%s, %s)', ('test_123', 'Test Watch'));
+          conn.commit();
+          print('Inserted test data');
+          "
