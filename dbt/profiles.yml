@@ -1,0 +1,13 @@
+ebay_watch_analytics:
+  target: dev
+  outputs:
+    dev:
+      type: snowflake
+      account: ycevnrl-me00216 # e.g., xy12345.us-east-2.aws
+      user: DBT_USER
+      password: "StrongPassword123!"
+      role: EBAY_DEVELOPER
+      warehouse: EBAY_WH
+      database: EBAY_WATCH_ANALYTICS
+      schema: STAGING
+      threads: 4
