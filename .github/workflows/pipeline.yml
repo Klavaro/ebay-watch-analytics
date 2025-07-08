@@ -48,3 +48,26 @@ jobs:
           conn.commit();
           print('Inserted test data');
           "
+      - name: Debug Snowflake Connection
+        run: |
+          echo "Testing connection with:"
+          echo "Account: ${{ secrets.SNOWFLAKE_ACCOUNT }}"
+          echo "User: ${{ secrets.SNOWFLAKE_USER }}"
+
+          python -c "
+          import os, snowflake.connector;
+          print('Trying to connect...');
+          try:
+            conn = snowflake.connector.connect(
+              user=os.getenv('SNOWFLAKE_USER'),
+              password=os.getenv('SNOWFLAKE_PASSWORD'),
+              account=os.getenv('SNOWFLAKE_ACCOUNT'),
+              warehouse=os.getenv('SNOWFLAKE_WAREHOUSE'),
+              database=os.getenv('SNOWFLAKE_DATABASE'),
+              role=os.getenv('SNOWFLAKE_ROLE', 'EBAY_DEVELOPER')
+            );
+            print('Success! Snowflake version:', conn.cursor().execute('SELECT CURRENT_VERSION()').fetchone()[0]);
+          except Exception as e:
+            print('FAILED:', str(e));
+            raise
+          "
