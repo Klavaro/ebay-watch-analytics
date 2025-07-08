@@ -31,26 +31,41 @@ jobs:
           python -m pip install --upgrade pip
           pip install snowflake-connector-python python-dotenv
 
-      - name: Debug Snowflake Connection
+      - name: Test Snowflake Connection & Data Loading
         run: |
-          echo "Testing connection with:"
-          echo "Account: ${{ secrets.SNOWFLAKE_ACCOUNT }}"
-          echo "User: ${{ secrets.SNOWFLAKE_USER }}"
-
+          echo "=== Testing Connection ==="
           python -c "
           import os, snowflake.connector;
-          print('Trying to connect...');
           try:
+            # 1. Test connection
             conn = snowflake.connector.connect(
               user=os.getenv('SNOWFLAKE_USER'),
               password=os.getenv('SNOWFLAKE_PASSWORD'),
               account=os.getenv('SNOWFLAKE_ACCOUNT'),
               warehouse=os.getenv('SNOWFLAKE_WAREHOUSE'),
               database=os.getenv('SNOWFLAKE_DATABASE'),
+              schema=os.getenv('SNOWFLAKE_SCHEMA'),
               role=os.getenv('SNOWFLAKE_ROLE', 'EBAY_DEVELOPER')
             );
-            print('Success! Snowflake version:', conn.cursor().execute('SELECT CURRENT_VERSION()').fetchone()[0]);
+            print('✓ Connection successful');
+            
+            # 2. Test data loading
+            cursor = conn.cursor();
+            cursor.execute('''
+              INSERT INTO EBAY_WATCHES (item_id, title, price, extraction_timestamp) 
+              VALUES (%s, %s, %s, CURRENT_TIMESTAMP())
+            ''', ('github_test_001', 'GitHub Test Watch', 999.99));
+            conn.commit();
+            print('✓ Test data inserted');
+            
+            # 3. Verify data exists
+            cursor.execute('SELECT COUNT(*) FROM EBAY_WATCHES WHERE item_id = %s', ('github_test_001',));
+            count = cursor.fetchone()[0];
+            if count == 0:
+              raise Exception('Data verification failed: Test record not found');
+            print(f'✓ Verification passed: {count} test records found');
+            
           except Exception as e:
-            print('FAILED:', str(e));
+            print('❌ Error:', str(e));
             raise
           "
