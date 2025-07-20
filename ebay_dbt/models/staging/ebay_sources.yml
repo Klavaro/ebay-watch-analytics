@@ -1,0 +1,12 @@
+version: 2
+
+sources:
+  - name: ebay_raw_source
+    database: EBAY_ANALYTICS
+    schema: STAGING
+    tables:
+      - name: EBAY_RAW
+        columns:
+          - name: ITEM_ID
+            tests:
+              - not_null

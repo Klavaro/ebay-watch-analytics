@@ -4,3 +4,5 @@ apache-airflow-providers-snowflake
 snowflake-connector-python
 pandas
 requests
+dbt-core
+dbt-snowflake
