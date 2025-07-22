@@ -30,9 +30,15 @@ clean-targets: # directories to be removed by `dbt clean`
 models:
   ebay_dbt:
     # Config indicated by + and applies to all files under models/example/
+    raw:
+      +schema: raw
+      +materialized: table
+      snowflake_warehouse: EBAY_WH
     staging:
+      +schema: staging
       +materialized: view
       snowflake_warehouse: EBAY_WH
     marts:
+      +schema: marts
       +materialized: table
       snowflake_warehouse: EBAY_WH

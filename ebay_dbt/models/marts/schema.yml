@@ -1,0 +1,10 @@
+sources:
+  - name: ebay_stg_source
+    database: EBAY_ANALYTICS
+    schema: STAGING
+    tables:
+      - name: STG_EBAY_ITEMS
+        columns:
+          - name: ITEM_ID
+            tests:
+              - not_null
