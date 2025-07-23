@@ -1,0 +1,166 @@
+version: 2
+
+sources:
+  - name: ebay_stg_source
+    database: EBAY_ANALYTICS
+    schema: STAGING
+    tables:
+      - name: STG_EBAY_ITEMS
+        columns:
+          - name: ITEM_ID
+            tests:
+              - not_null
+
+  - name: ebay_raw_source
+    database: EBAY_ANALYTICS
+    schema: RAW
+    tables:
+      - name: EBAY_RAW
+        columns:
+          - name: ITEM_ID
+            tests:
+              - not_null
+
+models:
+  - name: stg_ebay_items
+    description: "Flattened source of eBay item listings"
+    columns:
+      - name: item_id
+        tests: [not_null, unique]
+      - name: title
+      - name: condition
+      - name: condition_id
+      - name: category_id
+      - name: category_name
+      - name: seller_username
+      - name: seller_feedback_percentage
+      - name: seller_feedback_score
+      - name: listing_marketplace_id
+      - name: item_location_country
+      - name: price_value
+      - name: price_currency
+      - name: adult_only
+      - name: available_coupons
+      - name: top_rated_buying_experience
+      - name: priority_listing
+      - name: item_origin_date
+      - name: item_creation_date
+      - name: load_timestamp
+
+  - name: dim_condition
+    description: "Condition dimension with surrogate key"
+    columns:
+      - name: condition_sk
+        tests: [not_null, unique]
+      - name: condition_id
+      - name: condition
+
+  - name: dim_category
+    description: "Leaf category dimension"
+    columns:
+      - name: category_sk
+        tests: [not_null, unique]
+      - name: category_id
+      - name: category_name
+
+  - name: dim_seller
+    description: "Seller dimension with surrogate key"
+    columns:
+      - name: seller_sk
+        tests: [not_null, unique]
+      - name: seller_username
+      - name: seller_feedback_score
+      - name: seller_feedback_percentage
+
+  - name: dim_date
+    description: "Date dimension with surrogate key"
+    columns:
+      - name: date_sk
+        tests: [not_null, unique]
+      - name: date
+      - name: year
+      - name: month
+      - name: day
+      - name: quarter
+      - name: day_of_week
+
+  - name: fact_item_listing
+    description: "Fact table with one row per item listing"
+    columns:
+      - name: item_listing_sk
+        tests: [not_null, unique]
+      - name: item_id
+        tests: [not_null]
+      - name: title
+      - name: condition_sk
+        tests:
+          - relationships:
+              to: ref('dim_condition')
+              field: condition_sk
+      - name: category_sk
+        tests:
+          - relationships:
+              to: ref('dim_category')
+              field: category_sk
+      - name: seller_sk
+        tests:
+          - relationships:
+              to: ref('dim_seller')
+              field: seller_sk
+      - name: origin_date_sk
+        tests:
+          - relationships:
+              to: ref('dim_date')
+              field: date_sk
+      - name: creation_date_sk
+        tests:
+          - relationships:
+              to: ref('dim_date')
+              field: date_sk
+      - name: load_date_sk
+        tests:
+          - relationships:
+              to: ref('dim_date')
+              field: date_sk
+      - name: marketplace_id
+      - name: item_location_country
+      - name: price_value
+      - name: price_currency
+      - name: adult_only
+      - name: available_coupons
+      - name: top_rated_buying_experience
+      - name: priority_listing
+
+  - name: bridge_item_buying_option
+    description: "Bridge table mapping listings to buying options"
+    columns:
+      - name: item_id
+        tests:
+          - relationships:
+              to: ref('fact_item_listing')
+              field: item_id
+      - name: buying_option
+
+  - name: bridge_item_shipping_option
+    description: "Bridge table with shipping cost and region info"
+    columns:
+      - name: item_id
+        tests:
+          - relationships:
+              to: ref('fact_item_listing')
+              field: item_id
+      - name: shipping_cost_type
+      - name: shipping_cost
+      - name: shipping_currency
+      - name: ship_to_locations
+
+  - name: bridge_item_image
+    description: "Bridge table mapping item listings to image URLs"
+    columns:
+      - name: item_id
+        tests:
+          - relationships:
+              to: ref('fact_item_listing')
+              field: item_id
+      - name: image_url
+      - name: image_type

@@ -1,7 +1,8 @@
 select
     item_id,
     title,
-    try_parse_json(categories) as categories,
+    try_parse_json(leaf_category_ids)[0] as category_id,
+    try_parse_json(categories)[0]:categoryName as category_name,
     item_href,
     condition,
     condition_id,
