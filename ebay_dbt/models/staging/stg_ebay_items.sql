@@ -22,6 +22,7 @@ select
     price_value,
     price_currency,
     seller_username,
+    coalesce(seller_username, 'ANONYMOUS') as seller_username_cleaned,
     seller_feedback_percentage,
     seller_feedback_score,
     item_location_country,

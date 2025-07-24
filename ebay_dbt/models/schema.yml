@@ -21,6 +21,22 @@ sources:
             tests:
               - not_null
 
+snapshots:
+  - name: snap_seller
+    description: "Snapshot for tracking changes to seller attributes (Type 2 SCD)"
+    columns:
+      - name: seller_username
+        description: "Natural key for identifying the seller"
+        tests:
+          - not_null
+          - unique
+      - name: seller_feedback_score
+        description: "Seller's feedback score"
+      - name: seller_feedback_percentage
+        description: "Seller's positive feedback percentage"
+      - name: load_timestamp
+        description: "When the record was extracted from the source"
+
 models:
   - name: stg_ebay_items
     description: "Flattened source of eBay item listings"
@@ -33,6 +49,7 @@ models:
       - name: category_id
       - name: category_name
       - name: seller_username
+      - name: seller_username_cleaned
       - name: seller_feedback_percentage
       - name: seller_feedback_score
       - name: listing_marketplace_id
@@ -164,3 +181,48 @@ models:
               field: item_id
       - name: image_url
       - name: image_type
+  - name: mart_category_price_bands
+    description: "Provides price distribution metrics per category for identifying investment opportunities"
+    columns:
+      - name: category_sk
+        description: "Surrogate key for category"
+        tests:
+          - not_null
+      - name: price_p25
+        description: "25th percentile of price values"
+      - name: price_median
+        description: "50th percentile (median) of price values"
+      - name: price_p75
+        description: "75th percentile of price values"
+      - name: avg_price
+        description: "Average price in category"
+      - name: price_stddev
+        description: "Standard deviation of price in category"
+
+  - name: mart_seller_reputation_score
+    description: "Calculates weighted reputation score for sellers based on feedback metrics"
+    columns:
+      - name: seller_sk
+        description: "Surrogate key for seller"
+        tests:
+          - not_null
+      - name: seller_reputation_score
+        description: "Weighted reputation score combining feedback score and percentage"
+
+  - name: mart_condition_price_index
+    description: "Analyzes average and indexed price values by item condition"
+    columns:
+      - name: condition_sk
+        description: "Surrogate key for condition"
+        tests:
+          - not_null
+      - name: item_count
+        description: "Number of items listed with this condition"
+      - name: avg_price
+        description: "Average price of items in this condition"
+      - name: min_price
+        description: "Minimum price"
+      - name: max_price
+        description: "Maximum price"
+      - name: normalized_price_score
+        description: "Standardized price score compared to other conditions"

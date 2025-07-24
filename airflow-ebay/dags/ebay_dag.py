@@ -8,7 +8,7 @@ import json
 
 # Constants
 EBAY_API_URL = "https://api.sandbox.ebay.com/buy/browse/v1/item_summary/search"
-QUERY_PARAMS = {"q": "watch", "limit": "50", "category_ids": "31387"}
+QUERY_PARAMS = {"q": "laptop", "limit": "100"} #, "category_ids": "31387" 
 SNOWFLAKE_CONN_ID = "snowflake_default"
 TABLE_NAME = "EBAY_ANALYTICS.RAW.EBAY_RAW"
 
