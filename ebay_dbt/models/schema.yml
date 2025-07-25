@@ -1,16 +1,6 @@
 version: 2
 
 sources:
-  - name: ebay_stg_source
-    database: EBAY_ANALYTICS
-    schema: STAGING
-    tables:
-      - name: STG_EBAY_ITEMS
-        columns:
-          - name: ITEM_ID
-            tests:
-              - not_null
-
   - name: ebay_raw_source
     database: EBAY_ANALYTICS
     schema: RAW
@@ -199,15 +189,66 @@ models:
       - name: price_stddev
         description: "Standard deviation of price in category"
 
-  - name: mart_seller_reputation_score
-    description: "Calculates weighted reputation score for sellers based on feedback metrics"
+  - name: mart_item_performance
+    description: >
+      Aggregated performance metrics for each item listing including price, coupon status,
+      and priority listing flag to support business insights into listing effectiveness and pricing strategy.
     columns:
-      - name: seller_sk
-        description: "Surrogate key for seller"
+      - name: item_listing_sk
+        description: Surrogate key for the item listing.
         tests:
           - not_null
-      - name: seller_reputation_score
-        description: "Weighted reputation score combining feedback score and percentage"
+          - unique
+      - name: item_id
+        description: Original item ID from the eBay dataset.
+        tests:
+          - not_null
+          - unique
+      - name: price_value
+        description: Price of the item at the time of data capture.
+        tests:
+          - not_null
+          - greater_than:
+              value: 0
+      - name: price_currency
+        description: Currency used in pricing.
+        tests:
+          - not_null
+      - name: available_coupons
+        description: Boolean flag indicating if coupons were available.
+        tests:
+          - accepted_values:
+              values: [true, false]
+      - name: priority_listing
+        description: >
+          Boolean flag indicating whether the item is considered high-priority,
+          which can affect its visibility and click-through rate.
+        tests:
+          - accepted_values:
+              values: [true, false]
+      - name: top_rated_buying_experience
+        description: Flag indicating if the item provides a top-rated buying experience.
+        tests:
+          - accepted_values:
+              values: [true, false]
+      - name: item_location_country
+        description: Country where the item is shipped from.
+        tests:
+          - not_null
+      - name: creation_date_sk
+        description: Foreign key to the date dimension when the item was created.
+        tests:
+          - not_null
+          - relationships:
+              to: ref('dim_date')
+              field: date_sk
+      - name: origin_date_sk
+        description: Foreign key to the date dimension for the item's origin date.
+        tests:
+          - not_null
+          - relationships:
+              to: ref('dim_date')
+              field: date_sk
 
   - name: mart_condition_price_index
     description: "Analyzes average and indexed price values by item condition"

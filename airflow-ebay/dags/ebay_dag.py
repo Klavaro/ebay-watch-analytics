@@ -2,7 +2,7 @@ from airflow import DAG
 from airflow.operators.python import PythonOperator
 from airflow.providers.snowflake.hooks.snowflake import SnowflakeHook
 from airflow.models import Variable
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 import requests
 import json
 
@@ -49,7 +49,21 @@ def fetch_and_load_ebay_raw():
     conn = hook.get_conn()
     cursor = conn.cursor()
 
+        # Step 1: Get the freshest ITEM_CREATION_DATE in the table
+    cursor.execute(f"SELECT MAX(ITEM_CREATION_DATE) FROM {TABLE_NAME}")
+    result = cursor.fetchone()
+    max_creation_date = result[0].replace(tzinfo=timezone.utc) if result[0] else datetime.min.replace(tzinfo=timezone.utc)
+
     for item in data:
+        item_creation_str = item.get("itemCreationDate")
+        if not item_creation_str:
+            continue  # Skip if missing timestamp
+        item_creation_date = datetime.fromisoformat(item_creation_str.replace("Z", "+00:00"))
+
+        # Step 2: Only insert if item is newer
+        if item_creation_date <= max_creation_date:
+            continue
+
         image = item.get("image", {})
         price = item.get("price", {})
         seller = item.get("seller", {})
