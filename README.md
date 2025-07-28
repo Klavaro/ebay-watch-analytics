@@ -1,6 +1,6 @@
-# 🛍️ eBay Watch Analytics – Capstone Project
+# 🛍️ eBay Analytics – Capstone Project
 
-This project builds a data modeling solution using dbt and Snowflake to analyze eBay item listing data. The goal is to transform raw eBay listing data into dimensional models and business-oriented marts to answer real-life business questions.
+This project builds a data modeling solution using dbt, Snowflake and Airflow to analyze eBay item listing data.
 
 ## 🎯 Objective
 
@@ -9,6 +9,7 @@ To build a dimensional model (Kimball-style) of eBay listings and generate analy
 ## 🧱 Architecture Overview
 
 ```text
+ELT Pipeline
 eBay API → Snowflake (RAW → STAGING → STAR SCHEMA → MARTS) → dbt (transformations, snapshots, tests)
 ```
 
@@ -20,6 +21,7 @@ eBay API → Snowflake (RAW → STAGING → STAR SCHEMA → MARTS) → dbt (tran
 - **Bridge tables**: Capture many-to-many relationships like images, shipping options, and buying methods.
 - **Snapshots**: Track changes in seller data using SCD Type 2.
 - **Marts**: Business-use case aggregates to answer performance and pricing questions.
+- **Orchestration**: Running the pipeline, processing new data on a daily basis.
 
 ## 🔎 Business Questions Answered
 
@@ -27,8 +29,8 @@ eBay API → Snowflake (RAW → STAGING → STAR SCHEMA → MARTS) → dbt (tran
 
 **Purpose**: Aggregate item-level metrics to understand visibility, pricing, and promotional features.
 
-- How do pricing and listing features (like coupons or top-rated experience) affect performance?
-- Which countries or categories consistently perform well?
+- How do pricing and listing features (like coupons) affect performance?
+- Which countries in which categories consistently perform well?
 
 ### `mart_condition_price_index`
 
@@ -36,6 +38,13 @@ eBay API → Snowflake (RAW → STAGING → STAR SCHEMA → MARTS) → dbt (tran
 
 - Are new items priced significantly higher than used ones?
 - How does item condition correlate with category and value?
+
+### `mart_category_price_bands`
+
+**Purpose**: Evaluate category-level pricing distribution to find investment opportunities or underpriced segments.
+
+- What’s the typical price band for items in each category?
+- Are some categories more price-volatile than others?
 
 ## 🗃️ Dimensional Model Overview
 
@@ -82,6 +91,7 @@ Includes:
 | --------- | -------------------------------- |
 | dbt       | Data transformation and modeling |
 | Snowflake | Cloud data warehouse             |
+| Airflow   | Orchestration                    |
 | GitHub    | Source control and collaboration |
 
 ## 🗂️ Project Structure
@@ -90,36 +100,11 @@ Includes:
 .
 ├── models/
 │   ├── staging/
-│   ├── dimensions/
-│   ├── facts/
-│   ├── bridge/
+│   ├── core/
 │   ├── marts/
 ├── snapshots/
 ├── macros/
 ├── schema.yml
-├── README.md
-```
-
-## ⚙️ How to Run
-
-1. Clone the repository.
-2. Configure your `profiles.yml` for Snowflake.
-3. Run transformations:
-
-```bash
-dbt run
-```
-
-4. Run tests:
-
-```bash
-dbt test
-```
-
-5. Capture historical changes:
-
-```bash
-dbt snapshot
 ```
 
 ## 👤 Author
