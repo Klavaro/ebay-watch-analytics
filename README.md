@@ -23,7 +23,7 @@ eBay API → Snowflake (RAW → STAGING → STAR SCHEMA → MARTS) → dbt (tran
 - **Marts**: Business-use case aggregates to answer performance and pricing questions.
 - **Orchestration**: Running the pipeline, processing new data on a daily basis.
 
-## 🔎 Business Questions Answered
+## 🔎 Business Analytics
 
 ### `mart_item_performance`
 
