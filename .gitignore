@@ -212,3 +212,4 @@ airflow-ebay/logs/
 airflow.db
 *.pyc
 __pycache__/
+ewa_venv/
