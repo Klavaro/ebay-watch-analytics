@@ -48,7 +48,90 @@ eBay API → Snowflake (RAW → STAGING → STAR SCHEMA → MARTS) → dbt (tran
 
 ## 🗃️ Dimensional Model Overview
 
-![ER Diagram](er_diagram.png)
+```mermaid
+erDiagram
+    fact_item_listing ||--|{ bridge_item_buying_option : "1:N"
+    fact_item_listing ||--|{ bridge_item_shipping_option : "1:N"
+    fact_item_listing ||--|{ bridge_item_image : "1:N"
+    fact_item_listing }|--|| dim_condition : "condition"
+    fact_item_listing }|--|| dim_category : "category"
+    fact_item_listing }|--|| dim_seller : "seller"
+    fact_item_listing }|--|| dim_date : "origin_date"
+    fact_item_listing }|--|| dim_date : "creation_date"
+    fact_item_listing }|--|| dim_date : "load_date"
+
+
+
+    dim_condition {
+        string condition_sk PK
+        string condition_id
+        string condition
+    }
+
+    dim_category {
+        string category_sk PK
+        string category_id
+        string category_name
+    }
+
+    dim_seller {
+        string seller_sk PK
+        string seller_username
+        int seller_feedback_score
+        float seller_feedback_percentage
+    }
+
+    dim_date {
+        string date_sk PK
+        date date
+        int year
+        int month
+        int day
+        int quarter
+        int day_of_week
+    }
+
+    fact_item_listing {
+        string item_listing_sk PK
+        string item_id FK
+        string title
+        string condition_sk FK
+        string category_sk FK
+        string seller_sk FK
+        string origin_date_sk FK
+        string creation_date_sk FK
+        string load_date_sk FK
+        string marketplace_id
+        string item_location_country
+        float price_value
+        string price_currency
+        boolean adult_only
+        boolean available_coupons
+        boolean top_rated_buying_experience
+        boolean priority_listing
+    }
+
+    bridge_item_buying_option {
+        string item_id FK
+        string buying_option
+    }
+
+    bridge_item_shipping_option {
+        string item_id FK
+        string shipping_cost_type
+        float shipping_cost
+        string shipping_currency
+        string ship_to_locations
+    }
+
+    bridge_item_image {
+        string item_id FK
+        string image_url
+        string image_type
+    }
+
+
+```
 
 ### Fact Table: `fact_item_listing`
 
