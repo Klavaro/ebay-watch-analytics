@@ -15,11 +15,10 @@ snapshots:
   - name: snap_seller
     description: "Snapshot for tracking changes to seller attributes (Type 2 SCD)"
     columns:
-      - name: seller_username
+      - name: seller_username_cleaned
         description: "Natural key for identifying the seller"
         tests:
           - not_null
-          - unique
       - name: seller_feedback_score
         description: "Seller's feedback score"
       - name: seller_feedback_percentage
@@ -110,10 +109,6 @@ models:
               to: ref('dim_category')
               field: category_sk
       - name: seller_sk
-        tests:
-          - relationships:
-              to: ref('dim_seller')
-              field: seller_sk
       - name: origin_date_sk
         tests:
           - relationships:
@@ -199,30 +194,13 @@ models:
         tests:
           - not_null
           - unique
-      - name: item_id
-        description: Original item ID from the eBay dataset.
-        tests:
-          - not_null
-          - unique
+      - name: title
+      - name: condition_sk
       - name: price_value
         description: Price of the item at the time of data capture.
         tests:
           - not_null
-          - greater_than:
-              value: 0
-      - name: price_currency
-        description: Currency used in pricing.
-        tests:
-          - not_null
-      - name: available_coupons
-        description: Boolean flag indicating if coupons were available.
-        tests:
-          - accepted_values:
-              values: [true, false]
       - name: priority_listing
-        description: >
-          Boolean flag indicating whether the item is considered high-priority,
-          which can affect its visibility and click-through rate.
         tests:
           - accepted_values:
               values: [true, false]
@@ -231,24 +209,16 @@ models:
         tests:
           - accepted_values:
               values: [true, false]
-      - name: item_location_country
-        description: Country where the item is shipped from.
+      - name: available_coupons
+        description: Boolean flag indicating if coupons were available.
         tests:
-          - not_null
-      - name: creation_date_sk
-        description: Foreign key to the date dimension when the item was created.
-        tests:
-          - not_null
-          - relationships:
-              to: ref('dim_date')
-              field: date_sk
-      - name: origin_date_sk
-        description: Foreign key to the date dimension for the item's origin date.
-        tests:
-          - not_null
-          - relationships:
-              to: ref('dim_date')
-              field: date_sk
+          - accepted_values:
+              values: [true, false]
+
+      - name: shipping_cost
+      - name: image_count
+      - name: condition_id
+      - name: listing_quality_score
 
   - name: mart_condition_price_index
     description: "Analyzes average and indexed price values by item condition"

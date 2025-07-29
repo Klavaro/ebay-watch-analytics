@@ -5,12 +5,18 @@ from airflow.models import Variable
 from datetime import datetime, timedelta, timezone
 import requests
 import json
+from cosmos import DbtTaskGroup, ProjectConfig, ProfileConfig
+from cosmos.profiles import SnowflakeUserPasswordProfileMapping
+from cosmos.operators import DbtSnapshotOperator 
+
+
 
 # Constants
 EBAY_API_URL = "https://api.sandbox.ebay.com/buy/browse/v1/item_summary/search"
-QUERY_PARAMS = {"q": "laptop", "limit": "100"} #, "category_ids": "31387" 
+QUERY_PARAMS = {"q": "laptop", "limit": "100"}
 SNOWFLAKE_CONN_ID = "snowflake_default"
 TABLE_NAME = "EBAY_ANALYTICS.RAW.EBAY_RAW"
+DBT_PROJECT_DIR = "/opt/airflow/dags/dbt-ebay/"
 
 default_args = {
     "owner": "airflow",
@@ -18,7 +24,6 @@ default_args = {
     "retry_delay": timedelta(minutes=5),
 }
 
-# Get OAuth token using app + cert
 def get_ebay_oauth_token():
     url = "https://api.sandbox.ebay.com/identity/v1/oauth2/token"
     headers = {"Content-Type": "application/x-www-form-urlencoded"}
@@ -34,7 +39,6 @@ def get_ebay_oauth_token():
     response.raise_for_status()
     return response.json()["access_token"]
 
-# Fetch and load to Snowflake
 def fetch_and_load_ebay_raw():
     token = get_ebay_oauth_token()
     headers = {
@@ -49,7 +53,6 @@ def fetch_and_load_ebay_raw():
     conn = hook.get_conn()
     cursor = conn.cursor()
 
-        # Step 1: Get the freshest ITEM_CREATION_DATE in the table
     cursor.execute(f"SELECT MAX(ITEM_CREATION_DATE) FROM {TABLE_NAME}")
     result = cursor.fetchone()
     max_creation_date = result[0].replace(tzinfo=timezone.utc) if result[0] else datetime.min.replace(tzinfo=timezone.utc)
@@ -57,10 +60,8 @@ def fetch_and_load_ebay_raw():
     for item in data:
         item_creation_str = item.get("itemCreationDate")
         if not item_creation_str:
-            continue  # Skip if missing timestamp
+            continue
         item_creation_date = datetime.fromisoformat(item_creation_str.replace("Z", "+00:00"))
-
-        # Step 2: Only insert if item is newer
         if item_creation_date <= max_creation_date:
             continue
 
@@ -103,7 +104,7 @@ def fetch_and_load_ebay_raw():
         sql = f"""
             INSERT INTO {TABLE_NAME} (
                 ITEM_ID, TITLE, LEAF_CATEGORY_IDS, CATEGORIES, ITEM_HREF,
-                CONDITION, CONDITION_ID, THUMBNAIL_IMAGES, SHIPPING_OPTIONS,BUYING_OPTIONS,
+                CONDITION, CONDITION_ID, THUMBNAIL_IMAGES, SHIPPING_OPTIONS, BUYING_OPTIONS,
                 ITEM_WEB_URL, ADDITIONAL_IMAGES, ADULT_ONLY,
                 LEGACY_ITEM_ID, AVAILABLE_COUPONS, ITEM_ORIGIN_DATE, ITEM_CREATION_DATE,
                 TOP_RATED_BUYING_EXPERIENCE, PRIORITY_LISTING, LISTING_MARKETPLACE_ID,
@@ -111,8 +112,8 @@ def fetch_and_load_ebay_raw():
                 SELLER_FEEDBACK_PERCENTAGE, SELLER_FEEDBACK_SCORE, ITEM_LOCATION_COUNTRY,
                 LOAD_TIMESTAMP
             ) VALUES (
-                %(ITEM_ID)s, %(TITLE)s,%(LEAF_CATEGORY_IDS)s, %(CATEGORIES)s, %(ITEM_HREF)s,
-                %(CONDITION)s, %(CONDITION_ID)s, %(THUMBNAIL_IMAGES)s, %(SHIPPING_OPTIONS)s,%(BUYING_OPTIONS)s,
+                %(ITEM_ID)s, %(TITLE)s, %(LEAF_CATEGORY_IDS)s, %(CATEGORIES)s, %(ITEM_HREF)s,
+                %(CONDITION)s, %(CONDITION_ID)s, %(THUMBNAIL_IMAGES)s, %(SHIPPING_OPTIONS)s, %(BUYING_OPTIONS)s,
                 %(ITEM_WEB_URL)s, %(ADDITIONAL_IMAGES)s, %(ADULT_ONLY)s,
                 %(LEGACY_ITEM_ID)s, %(AVAILABLE_COUPONS)s, %(ITEM_ORIGIN_DATE)s, %(ITEM_CREATION_DATE)s,
                 %(TOP_RATED_BUYING_EXPERIENCE)s, %(PRIORITY_LISTING)s, %(LISTING_MARKETPLACE_ID)s,
@@ -121,12 +122,10 @@ def fetch_and_load_ebay_raw():
                 %(LOAD_TIMESTAMP)s
             )
         """
-
         cursor.execute(sql, row)
 
     cursor.close()
     conn.close()
-
 
 # Define DAG
 with DAG(
@@ -144,4 +143,38 @@ with DAG(
         python_callable=fetch_and_load_ebay_raw,
     )
 
-    fetch_and_load
+    profile_config = ProfileConfig(
+        profile_name="snowflake",
+        target_name="dev",
+        profile_mapping=SnowflakeUserPasswordProfileMapping(
+            conn_id=SNOWFLAKE_CONN_ID,
+            profile_args={
+                "database": "EBAY_ANALYTICS",
+                "schema": "RAW",
+                "warehouse": "EBAY_WH",
+                "role": "EBAY_DEVELOPER"
+            },
+        ),
+    )
+
+    dbt_snapshot = DbtSnapshotOperator(
+        task_id="run_dbt_snapshot",
+        project_dir=DBT_PROJECT_DIR,
+        profile_config=profile_config,
+        install_deps=True,
+    )
+
+
+    # Single dbt run using DbtTaskGroup
+    with DbtTaskGroup(
+        group_id="dbt_transformations",
+        project_config=ProjectConfig(DBT_PROJECT_DIR),
+        profile_config=profile_config,
+        operator_args={
+            "install_deps": True,
+            "select": ["staging", "core", "marts"],
+        },
+    ) as dbt_tg:
+        pass 
+
+    fetch_and_load >> dbt_tg

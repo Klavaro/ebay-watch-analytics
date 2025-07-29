@@ -192,6 +192,7 @@ Includes:
 
 ## 👤 Author
 
-**Your Name**  
-Capstone Project for Data Engineering/Analytics  
-[GitHub](#) | [LinkedIn](#)
+**Robert Lisziewicz**
+
+[![GitHub](https://img.shields.io/badge/GitHub-Profile-blue?logo=github)](https://github.com/Klavaro)
+[![LinkedIn](https://img.shields.io/badge/LinkedIn-Profile-blue?logo=linkedin)](https://www.linkedin.com/in/róbert-lisziewicz-0105bb351/)
