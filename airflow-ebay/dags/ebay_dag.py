@@ -6,7 +6,7 @@ from datetime import datetime, timedelta, timezone
 import requests
 import json
 from cosmos import DbtTaskGroup, ProjectConfig, ProfileConfig
-from cosmos.profiles import SnowflakeUserPasswordProfileMapping
+from cosmos.profiles import SnowflakeUserPasswordProfileMapping,SnowflakePrivateKeyPemProfileMapping
 from cosmos.operators import DbtSnapshotOperator 
 
 
@@ -14,9 +14,10 @@ from cosmos.operators import DbtSnapshotOperator
 # Constants
 EBAY_API_URL = "https://api.sandbox.ebay.com/buy/browse/v1/item_summary/search"
 QUERY_PARAMS = {"q": "laptop", "limit": "100"}
-SNOWFLAKE_CONN_ID = "snowflake_default"
+SNOWFLAKE_CONN_ID = "snowflake_rsa"
 TABLE_NAME = "EBAY_ANALYTICS.RAW.EBAY_RAW"
 DBT_PROJECT_DIR = "/opt/airflow/dags/dbt-ebay/"
+
 
 default_args = {
     "owner": "airflow",
@@ -127,11 +128,12 @@ def fetch_and_load_ebay_raw():
     cursor.close()
     conn.close()
 
+private_key_pem = Variable.get("rsa_private")
 # Define DAG
 with DAG(
     dag_id="ebay_to_snowflake_raw",
     default_args=default_args,
-    description="Fetch raw eBay watch listings and load to Snowflake with exact schema match",
+    description="Fetch raw eBay listings and load to Snowflake with exact schema match",
     start_date=datetime(2025, 7, 15),
     schedule_interval="@daily",
     catchup=False,
@@ -146,13 +148,14 @@ with DAG(
     profile_config = ProfileConfig(
         profile_name="snowflake",
         target_name="dev",
-        profile_mapping=SnowflakeUserPasswordProfileMapping(
+        profile_mapping=SnowflakePrivateKeyPemProfileMapping(
             conn_id=SNOWFLAKE_CONN_ID,
             profile_args={
                 "database": "EBAY_ANALYTICS",
                 "schema": "RAW",
                 "warehouse": "EBAY_WH",
-                "role": "EBAY_DEVELOPER"
+                "role": "EBAY_DEVELOPER",
+                "private_key": private_key_pem  # pass key here inside profile_args
             },
         ),
     )

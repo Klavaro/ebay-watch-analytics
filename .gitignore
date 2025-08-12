@@ -213,3 +213,5 @@ airflow.db
 *.pyc
 __pycache__/
 ewa_venv/
+.p8
+.pub

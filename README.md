@@ -181,13 +181,30 @@ Includes:
 
 ```bash
 .
-├── models/
-│   ├── staging/
-│   ├── core/
-│   ├── marts/
-├── snapshots/
-├── macros/
-├── schema.yml
+├── airflow-ebay/
+│   ├── dags/
+│   │   ├── dbt-ebay/
+│   │   │   ├── macros/
+│   │   │   ├── models/
+│   │   │   │   ├── staging/stg_ebay_items
+│   │   │   │   │   ├── stg_ebay_items.sql
+│   │   │   │   ├── core/
+│   │   │   │   │   ├── bridge_item_buying_option.sql
+│   │   │   │   │   ├── bridge_item_image.sql
+│   │   │   │   │   ├── bridge_item_shipping_option.sql
+│   │   │   │   │   ├── dim_category.sql
+│   │   │   │   │   ├── dim_condition.sql
+│   │   │   │   │   ├── dim_date.sql
+│   │   │   │   │   ├── dim_seller.sql
+│   │   │   │   │   ├── fact_item_listing.sql
+│   │   │   │   ├── marts/
+│   │   │   │   │   ├── mart_category_price_bands.sql
+│   │   │   │   │   ├── mart_condition_price_index.sql
+│   │   │   │   │   ├── mart_item_performance.sql
+│   │   │   ├── tests/
+│   │   │   ├── schema.yml
+│   │   ├── ebay_dag.py
+
 ```
 
 ## 👤 Author
