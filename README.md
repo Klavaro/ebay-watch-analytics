@@ -210,6 +210,9 @@ Includes:
 │   │   │   │   │   ├── dim_condition.sql
 │   │   │   │   │   ├── dim_date.sql
 │   │   │   │   │   ├── dim_seller.sql
+│   │   │   │   │   ├── dim_image.sql
+│   │   │   │   │   ├── dim_buying_option.sql
+│   │   │   │   │   ├── dim_shipping_option.sql
 │   │   │   │   │   ├── fact_item_listing.sql
 │   │   │   │   ├── marts/
 │   │   │   │   │   ├── mart_category_price_bands.sql
