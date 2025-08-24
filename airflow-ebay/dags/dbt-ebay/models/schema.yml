@@ -53,43 +53,6 @@ models:
       - name: item_creation_date
       - name: load_timestamp
 
-  - name: dim_condition
-    description: "Condition dimension with surrogate key"
-    columns:
-      - name: condition_sk
-        tests: [not_null, unique]
-      - name: condition_id
-      - name: condition
-
-  - name: dim_category
-    description: "Leaf category dimension"
-    columns:
-      - name: category_sk
-        tests: [not_null, unique]
-      - name: category_id
-      - name: category_name
-
-  - name: dim_seller
-    description: "Seller dimension with surrogate key"
-    columns:
-      - name: seller_sk
-        tests: [not_null, unique]
-      - name: seller_username
-      - name: seller_feedback_score
-      - name: seller_feedback_percentage
-
-  - name: dim_date
-    description: "Date dimension with surrogate key"
-    columns:
-      - name: date_sk
-        tests: [not_null, unique]
-      - name: date
-      - name: year
-      - name: month
-      - name: day
-      - name: quarter
-      - name: day_of_week
-
   - name: fact_item_listing
     description: "Fact table with one row per item listing"
     columns:
@@ -132,40 +95,129 @@ models:
       - name: available_coupons
       - name: top_rated_buying_experience
       - name: priority_listing
-
-  - name: bridge_item_buying_option
-    description: "Bridge table mapping listings to buying options"
+  #DIMS
+  - name: dim_condition
+    description: "Condition dimension with surrogate key"
     columns:
-      - name: item_id
+      - name: condition_sk
+        tests: [not_null, unique]
+      - name: condition_id
+      - name: condition
+
+  - name: dim_category
+    description: "Leaf category dimension"
+    columns:
+      - name: category_sk
+        tests: [not_null, unique]
+      - name: category_id
+      - name: category_name
+
+  - name: dim_seller
+    description: "Seller dimension with surrogate key"
+    columns:
+      - name: seller_sk
+        tests: [not_null, unique]
+      - name: seller_username
+      - name: seller_feedback_score
+      - name: seller_feedback_percentage
+
+  - name: dim_date
+    description: "Date dimension with surrogate key"
+    columns:
+      - name: date_sk
+        tests: [not_null, unique]
+      - name: date
+      - name: year
+      - name: month
+      - name: day
+      - name: quarter
+      - name: day_of_week
+
+  - name: dim_image
+    description: "Dimension table for item images"
+    columns:
+      - name: image_sk
         tests:
-          - relationships:
-              to: ref('fact_item_listing')
-              field: item_id
+          - not_null
+          - unique
+      - name: image_url
+        tests:
+          - not_null
+
+  - name: dim_shipping_option
+    description: "Dimension table for shipping options"
+    columns:
+      - name: shipping_option_sk
+        tests:
+          - not_null
+          - unique
+      - name: shipping_cost_type
+        tests:
+          - not_null
+      - name: shipping_currency
+        tests:
+          - not_null
+
+  - name: dim_buying_option
+    description: "Dimension table for buying options"
+    columns:
+      - name: buying_option_sk
+        tests:
+          - not_null
+          - unique
       - name: buying_option
+        tests:
+          - not_null
+
+  # BRIDGES
+  - name: bridge_item_image
+    description: "Bridge table linking item listings to images (many-to-many)"
+    columns:
+      - name: item_listing_sk
+        tests:
+          - not_null
+          - relationships:
+              to: ref('fact_item_listings')
+              field: item_listing_sk
+      - name: image_sk
+        tests:
+          - not_null
+          - relationships:
+              to: ref('dim_image')
+              field: image_sk
 
   - name: bridge_item_shipping_option
-    description: "Bridge table with shipping cost and region info"
+    description: "Bridge table linking item listings to shipping options (many-to-many)"
     columns:
-      - name: item_id
+      - name: item_listing_sk
         tests:
+          - not_null
           - relationships:
-              to: ref('fact_item_listing')
-              field: item_id
-      - name: shipping_cost_type
-      - name: shipping_cost
-      - name: shipping_currency
-      - name: ship_to_locations
+              to: ref('fact_item_listings')
+              field: item_listing_sk
+      - name: shipping_option_sk
+        tests:
+          - not_null
+          - relationships:
+              to: ref('dim_shipping_option')
+              field: shipping_option_sk
 
-  - name: bridge_item_image
-    description: "Bridge table mapping item listings to image URLs"
+  - name: bridge_item_buying_option
+    description: "Bridge table linking item listings to buying options (many-to-many)"
     columns:
-      - name: item_id
+      - name: item_listing_sk
         tests:
+          - not_null
           - relationships:
-              to: ref('fact_item_listing')
-              field: item_id
-      - name: image_url
-      - name: image_type
+              to: ref('fact_item_listings')
+              field: item_listing_sk
+      - name: buying_option_sk
+        tests:
+          - not_null
+          - relationships:
+              to: ref('dim_buying_option')
+              field: buying_option_sk
+  #MARTS
   - name: mart_category_price_bands
     description: "Provides price distribution metrics per category for identifying investment opportunities"
     columns:

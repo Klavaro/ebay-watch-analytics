@@ -53,14 +53,17 @@ erDiagram
     fact_item_listing ||--|{ bridge_item_buying_option : "1:N"
     fact_item_listing ||--|{ bridge_item_shipping_option : "1:N"
     fact_item_listing ||--|{ bridge_item_image : "1:N"
+
+    bridge_item_buying_option }|--|| dim_buying_option : "buying_option"
+    bridge_item_shipping_option }|--|| dim_shipping_option : "shipping_option"
+    bridge_item_image }|--|| dim_image : "image"
+
     fact_item_listing }|--|| dim_condition : "condition"
     fact_item_listing }|--|| dim_category : "category"
     fact_item_listing }|--|| dim_seller : "seller"
     fact_item_listing }|--|| dim_date : "origin_date"
     fact_item_listing }|--|| dim_date : "creation_date"
     fact_item_listing }|--|| dim_date : "load_date"
-
-
 
     dim_condition {
         string condition_sk PK
@@ -91,9 +94,28 @@ erDiagram
         int day_of_week
     }
 
+    dim_buying_option {
+        string buying_option_sk PK
+        string buying_option
+    }
+
+    dim_shipping_option {
+        string shipping_option_sk PK
+        string shipping_cost_type
+        float shipping_cost
+        string shipping_currency
+        string ship_to_locations
+    }
+
+    dim_image {
+        string image_sk PK
+        string image_url
+        string image_type
+    }
+
     fact_item_listing {
         string item_listing_sk PK
-        string item_id FK
+        string item_id
         string title
         string condition_sk FK
         string category_sk FK
@@ -112,24 +134,19 @@ erDiagram
     }
 
     bridge_item_buying_option {
-        string item_id FK
-        string buying_option
+        string item_listing_sk FK
+        string buying_option_sk FK
     }
 
     bridge_item_shipping_option {
-        string item_id FK
-        string shipping_cost_type
-        float shipping_cost
-        string shipping_currency
-        string ship_to_locations
+        string item_listing_sk FK
+        string shipping_option_sk FK
     }
 
     bridge_item_image {
-        string item_id FK
-        string image_url
-        string image_type
+        string item_listing_sk FK
+        string image_sk FK
     }
-
 
 ```
 
