@@ -161,12 +161,9 @@ erDiagram
 - `dim_category`: Leaf-level eBay categories.
 - `dim_seller`: With SCD Type 2 applied to capture feedback changes.
 - `dim_date`: Derived from origin, creation, and load timestamps.
-
-### Bridge Tables:
-
-- `bridge_item_image`: All image URLs per item (thumbnail & additional).
-- `bridge_item_buying_option`: Available buying methods per item.
-- `bridge_item_shipping_option`: Captures all shipping options.
+- `dim_image`: All image URLs per item (thumbnail & additional).
+- `dim_buying_option`: Available buying methods per item.
+- `dim_shipping_option`: Captures all shipping options.
 
 ## 🔄 Snapshots
 
